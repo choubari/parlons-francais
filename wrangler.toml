@@ -28,7 +28,7 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "parlons"
-database_id = "REPLACE_WITH_ID_FROM_wrangler_d1_create"
+database_id = "4940140b-dcd7-42c6-8620-1d167717d440"
 
 # ── R2 bucket for avatar uploads ───────────────────────────────────────────
 # Bucket "parlons-avatars". Avatars fall back to generated initials if removed.
