@@ -1,16 +1,17 @@
 import "server-only";
 import type { GoogleGenAI } from "@google/genai";
 
-function statusOf(err: unknown): number | undefined {
+export function statusOf(err: unknown): number | undefined {
   const e = err as { status?: number; error?: { code?: number } };
   return e?.status ?? e?.error?.code;
 }
 
-/** Retry on transient (5xx / 429) errors; a 4xx like 404 is permanent, so we
- *  stop retrying that model and let the caller fall back to the next one. */
-function isTransient(err: unknown): boolean {
+/** Only overload/unknown (5xx) errors are worth retrying the SAME model for.
+ *  A 429 is a rate/quota limit (won't clear in-request) and a 4xx like 404 is
+ *  permanent — both should fall through to the next model immediately. */
+function worthRetryingSameModel(err: unknown): boolean {
   const s = statusOf(err);
-  return s === undefined || s === 429 || (s >= 500 && s <= 599);
+  return s === undefined || (s >= 500 && s <= 599 && s !== 501);
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -45,7 +46,8 @@ export async function generateWithRetry(
       } catch (e) {
         lastErr = e;
         console.error(`[${label}] ${model} attempt ${attempt}/${retries} failed`, e);
-        if (!isTransient(e)) break; // permanent error → try the next model now
+        // 429 (quota/rate) and 4xx won't clear by retrying this model — move on.
+        if (!worthRetryingSameModel(e)) break;
       }
       if (attempt < retries) await sleep(base * attempt); // linear backoff
     }

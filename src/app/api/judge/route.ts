@@ -4,7 +4,7 @@ import { getEnv, getDb } from "@/lib/db/client";
 import { getCurrentUser } from "@/lib/auth/user";
 import { saveScore } from "@/lib/db/scores";
 import { buildJudgePrompt, responseJsonSchema, scoreCardSchema } from "@/lib/judge";
-import { generateWithRetry } from "@/lib/gemini";
+import { generateWithRetry, statusOf } from "@/lib/gemini";
 
 type Turn = { role: "caller" | "prospect"; text: string };
 
@@ -92,9 +92,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ scoreCard: parsed.data, scoreId });
   } catch (err) {
     console.error("judge failed", err);
+    const quota = statusOf(err) === 429;
     return NextResponse.json(
-      { error: "Could not score the call right now." },
-      { status: 502 }
+      {
+        error: quota
+          ? "Quota de l'API Gemini atteint (offre gratuite). Réessayez dans un moment ou utilisez une clé avec un quota plus élevé."
+          : "Impossible de générer le rapport pour le moment. Réessayez.",
+      },
+      { status: quota ? 429 : 502 }
     );
   }
 }

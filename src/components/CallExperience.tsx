@@ -306,16 +306,19 @@ export function CallExperience({ scenario }: { scenario: ChosenScenario }) {
                   >
                     {turn.role === "prospect" ? personaName : t.call.you}
                   </div>
-                  <p className="text-[19px] leading-[1.5] text-ink">{turn.text}</p>
-                  {turn.role === "caller" && corrections[i] && (
-                    <div className="mt-2 rounded-[10px] border-l-4 border-flame bg-flame-soft px-4 py-3">
-                      <div className="text-[17px] font-semibold leading-[1.45] text-danger">
-                        ✎ {corrections[i].corrected}
-                      </div>
-                      {corrections[i].hint && (
-                        <div className="mt-0.5 text-[14px] text-ink-soft">{corrections[i].hint}</div>
-                      )}
+                  {turn.role === "caller" && corrections[i] ? (
+                    // Recap style: struck-through original in red, corrected in
+                    // green. The rule/type is saved for the end-of-session report.
+                    <div>
+                      <p className="text-[18px] leading-[1.5] text-danger line-through decoration-danger/40">
+                        {turn.text}
+                      </p>
+                      <p className="mt-1 text-[19px] font-bold leading-[1.5] text-moss">
+                        → {corrections[i].corrected}
+                      </p>
                     </div>
+                  ) : (
+                    <p className="text-[19px] leading-[1.5] text-ink">{turn.text}</p>
                   )}
                 </div>
               ))}
