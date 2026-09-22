@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { GITHUB_URL } from "@/lib/config";
+import { useI18n } from "@/lib/i18n/context";
 
 // Slim, dismissible banner: this hosted instance is a demo on Google AI Studio's
 // free tier (limited daily quota), so corrections may pause. Points people to
@@ -9,6 +10,7 @@ import { GITHUB_URL } from "@/lib/config";
 const KEY = "parlons.demo.dismissed";
 
 export function DemoBanner() {
+  const { t } = useI18n();
   const [hidden, setHidden] = useState(true);
 
   useEffect(() => {
@@ -21,15 +23,14 @@ export function DemoBanner() {
   return (
     <div className="flex items-center justify-center gap-3 bg-espresso px-4 py-2 text-center text-[13px] text-white">
       <span>
-        🇫🇷 Version démo — quotas d&apos;IA limités (offre gratuite Google). Hébergez votre
-        propre version :{" "}
+        🇫🇷 {t.demo.text}{" "}
         <a
           href={GITHUB_URL}
           target="_blank"
           rel="noreferrer"
           className="font-bold underline underline-offset-2"
         >
-          code source sur GitHub →
+          {t.demo.cta}
         </a>
       </span>
       <button

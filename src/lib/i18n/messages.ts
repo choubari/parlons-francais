@@ -49,6 +49,11 @@ export const en = {
     privacy: "Privacy policy",
   },
 
+  demo: {
+    text: "Limited free preview.",
+    cta: "Self-host your own →",
+  },
+
   league: {
     heroTitle: "Speak French out loud, in real situations.",
     heroSubtitle:
@@ -259,6 +264,11 @@ export const fr: Messages = {
   footer: {
     tagline: "Entraînez-vous à parler français à voix haute avec un partenaire IA.",
     privacy: "Politique de confidentialité",
+  },
+
+  demo: {
+    text: "Aperçu gratuit limité.",
+    cta: "Hébergez la vôtre →",
   },
 
   league: {
