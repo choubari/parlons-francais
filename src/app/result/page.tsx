@@ -72,7 +72,7 @@ export default function ResultPage() {
     typeof window !== "undefined" ? window.location.origin : "https://parlons.choubari.com";
 
   return (
-    <main className="animate-rise mx-auto w-full max-w-[760px] flex-1 px-5 pb-20 pt-10 sm:px-10">
+    <main className="animate-rise mx-auto w-full max-w-[1000px] flex-1 px-5 pb-20 pt-10 sm:px-10">
       {state === "scoring" && (
         <div className="mt-20 flex flex-col items-center gap-3 text-center text-muted">
           <span className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-line border-t-grape" />

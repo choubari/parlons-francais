@@ -50,7 +50,7 @@ export default function SavedResultPage({
   const retryHref = score?.exerciseId ? `/exercise/${score.exerciseId}` : "/private";
 
   return (
-    <main className="animate-rise mx-auto w-full max-w-[760px] flex-1 px-5 pb-20 pt-10 sm:px-10">
+    <main className="animate-rise mx-auto w-full max-w-[1000px] flex-1 px-5 pb-20 pt-10 sm:px-10">
       {state === "loading" && <div className="mt-20 text-center text-muted">…</div>}
       {state === "notfound" && (
         <Card className="mt-6 flex flex-col items-start gap-3 p-8">
