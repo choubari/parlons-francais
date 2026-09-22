@@ -46,7 +46,7 @@ export default function SavedResultPage({
     };
   }, [id]);
 
-  const shareLink = typeof window !== "undefined" ? window.location.href : "https://french.choubari.com";
+  const shareLink = typeof window !== "undefined" ? window.location.href : "https://parlons.choubari.com";
   const retryHref = score?.exerciseId ? `/exercise/${score.exerciseId}` : "/private";
 
   return (

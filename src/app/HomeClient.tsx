@@ -54,7 +54,7 @@ export default function HomeClient() {
     open(filtered[Math.floor(Math.random() * filtered.length)].id);
   }
 
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://french.choubari.com";
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://parlons.choubari.com";
 
   return (
     <main className="animate-rise mx-auto w-full max-w-[1280px] flex-1 px-5 pb-20 pt-10 sm:px-10 sm:pt-12">

@@ -8,7 +8,7 @@ workers_dev = true
 
 # Custom domain. Wrangler provisions the DNS record + TLS cert on deploy.
 routes = [
-  { pattern = "french.choubari.com", custom_domain = true },
+  { pattern = "parlons.choubari.com", custom_domain = true },
 ]
 
 [observability]
@@ -45,5 +45,5 @@ bucket_name = "french-avatars"
 # Non-secret config. APP_URL must be the deployed origin so magic-link callbacks
 # resolve correctly. For local dev, .env.local's APP_URL (http://localhost:3000)
 # takes over.
-APP_URL = "https://french.choubari.com"
+APP_URL = "https://parlons.choubari.com"
 RESEND_FROM = "Parlons <parlons@mail.choubari.com>"

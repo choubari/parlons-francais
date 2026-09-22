@@ -165,14 +165,34 @@ export class LiveCall {
       }
     }
 
-    if (sc?.inputTranscription?.text) this.callerBuf += sc.inputTranscription.text;
-    if (sc?.outputTranscription?.text)
+    let changed = false;
+    if (sc?.inputTranscription?.text) {
+      this.callerBuf += sc.inputTranscription.text;
+      changed = true;
+    }
+    if (sc?.outputTranscription?.text) {
       this.prospectBuf += sc.outputTranscription.text;
+      changed = true;
+    }
 
     if (sc?.turnComplete) {
       this.flushTurns();
       this.h.onProspectSpeaking(false);
+    } else if (changed) {
+      // Stream partial text as each speaker talks, so the transcript updates
+      // word-by-word per person instead of once per completed round-trip.
+      this.emitLive();
     }
+  }
+
+  /** Committed turns plus whatever each speaker is mid-sentence on right now. */
+  private emitLive() {
+    const provisional: TranscriptTurn[] = [];
+    const c = this.callerBuf.trim();
+    const p = this.prospectBuf.trim();
+    if (c) provisional.push({ role: "caller", text: c });
+    if (p) provisional.push({ role: "prospect", text: p });
+    this.h.onTranscript([...this.turns, ...provisional]);
   }
 
   private flushTurns() {

@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Sentence too long." }, { status: 400 });
   }
 
-  const model = env.GEMINI_JUDGE_MODEL || "gemini-2.5-flash";
+  const model = env.GEMINI_JUDGE_MODEL || "gemini-flash-latest";
   const ai = new GoogleGenAI({ apiKey });
 
   try {

@@ -67,7 +67,7 @@ export default function ResultPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
 
-  const shareLink = typeof window !== "undefined" ? window.location.origin : "https://french.choubari.com";
+  const shareLink = typeof window !== "undefined" ? window.location.origin : "https://parlons.choubari.com";
 
   return (
     <main className="animate-rise mx-auto w-full max-w-[760px] flex-1 px-5 pb-20 pt-10 sm:px-10">

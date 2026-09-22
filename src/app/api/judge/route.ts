@@ -47,9 +47,8 @@ export async function POST(req: NextRequest) {
   // Try the configured model first, then fall back to sibling models when the
   // primary is overloaded (503 UNAVAILABLE happens on the shared free tier).
   const models = [
-    env.GEMINI_JUDGE_MODEL || "gemini-2.5-flash",
-    "gemini-flash-latest",
-    "gemini-2.0-flash",
+    env.GEMINI_JUDGE_MODEL || "gemini-flash-latest",
+    "gemini-3.6-flash",
   ].filter((m, i, a) => a.indexOf(m) === i);
   const ai = new GoogleGenAI({ apiKey });
   const prompt = buildJudgePrompt({ product, goal, transcript: transcriptText, locale });

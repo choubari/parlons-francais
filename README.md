@@ -44,7 +44,7 @@ npx wrangler secret put AUTH_SECRET
 
 # 3. Schéma + déploiement
 npm run db:migrate:remote
-npm run deploy                                  # → french.choubari.com
+npm run deploy                                  # → parlons.choubari.com
 ```
 
 ## Variables d'environnement

@@ -19,11 +19,11 @@ export async function ensureSeeded(db: D1Database): Promise<void> {
   const adminEmail = (env.ADMIN_EMAIL || "admin@parlons.local").toLowerCase();
   const now = Date.now();
 
-  // Admin user (owns the built-in exercises). Displayed as "Closer Team".
+  // Admin user (owns the built-in situations). Displayed as "Équipe Parlons".
   await db
     .prepare(
       `INSERT INTO users (id, email, first_name, last_name, role, created_at)
-       VALUES (?, ?, 'Parlons', 'Équipe', 'admin', ?)
+       VALUES (?, ?, 'Équipe', 'Parlons', 'admin', ?)
        ON CONFLICT(id) DO UPDATE SET email = excluded.email, role = 'admin'`
     )
     .bind(ADMIN_ID, adminEmail, now)
