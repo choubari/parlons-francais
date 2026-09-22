@@ -7,6 +7,8 @@
 
 **🔗 Démo en ligne : [parlons.choubari.com](https://parlons.choubari.com)**
 
+![Aperçu de Parlons — rapport de correction](docs/preview.png)
+
 > ⚠️ La démo tourne sur l'offre **gratuite** de Google AI Studio (≈ 20 requêtes/jour et
 > par modèle, partagées). La correction en direct peut donc se mettre en pause. Pour un
 > usage réel, **hébergez votre propre version** (ci-dessous) avec votre clé.
