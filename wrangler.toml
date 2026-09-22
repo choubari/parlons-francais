@@ -1,0 +1,49 @@
+name = "french-trainer"
+main = ".open-next/worker.js"
+compatibility_date = "2025-03-25"
+compatibility_flags = ["nodejs_compat"]
+
+# Keep the *.workers.dev URL live alongside the custom domain.
+workers_dev = true
+
+# Custom domain. Wrangler provisions the DNS record + TLS cert on deploy.
+routes = [
+  { pattern = "french.choubari.com", custom_domain = true },
+]
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+# ── D1 database ────────────────────────────────────────────────────────────
+# Create it once, then paste the returned database_id below:
+#   npx wrangler d1 create french-trainer
+# Apply the schema (local dev + remote):
+#   npx wrangler d1 migrations apply french-trainer            # local
+#   npx wrangler d1 migrations apply french-trainer --remote   # production
+[[d1_databases]]
+binding = "DB"
+database_name = "french-trainer"
+database_id = "REPLACE_WITH_ID_FROM_wrangler_d1_create"
+
+# ── R2 bucket for avatar uploads ───────────────────────────────────────────
+# Bucket "french-avatars". Avatars fall back to generated initials if removed.
+[[r2_buckets]]
+binding = "AVATARS"
+bucket_name = "french-avatars"
+
+# Secrets (set with `npx wrangler secret put <NAME>` — never commit values):
+#   GEMINI_API_KEY   Google AI Studio key (live avatar + correction)
+#   RESEND_API_KEY   Resend API key (magic-link emails)
+#   ADMIN_EMAIL      email that owns the built-in situations
+#   AUTH_SECRET      random 32+ char string (reserved)
+[vars]
+# Non-secret config. APP_URL must be the deployed origin so magic-link callbacks
+# resolve correctly. For local dev, .env.local's APP_URL (http://localhost:3000)
+# takes over.
+APP_URL = "https://french.choubari.com"
+RESEND_FROM = "Parlons <parlons@mail.choubari.com>"

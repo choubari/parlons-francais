@@ -1,0 +1,3 @@
+# Drop your PRIVATE exercise packs here (e.g. aec.ts, alobees.ts).
+# Everything in this folder except this .gitkeep is git-ignored and never pushed.
+# A pack default-exports an Exercise[]; register it in index.ts's PRIVATE_PACKS list.
