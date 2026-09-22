@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
       label: "judge",
       retriesPerModel: 3,
       baseDelayMs: 800,
+      honorRetryAfter: true,
     });
     const parsed = scoreCardSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) {

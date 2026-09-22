@@ -3,7 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import { getEnv } from "@/lib/db/client";
 import { getCurrentUser } from "@/lib/auth/user";
 import { buildLivePrompt, liveResponseJsonSchema, liveCorrectionSchema } from "@/lib/correct";
-import { generateWithRetry } from "@/lib/gemini";
+import { generateWithRetry, statusOf } from "@/lib/gemini";
 
 // Per-turn live correction of a single spoken sentence. Kept fast and cheap so
 // it can run after each of the learner's turns without stalling the chat.
@@ -61,6 +61,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ correction: parsed.data });
   } catch (err) {
     console.error("[correct] failed", err);
-    return NextResponse.json({ error: "Correction failed." }, { status: 502 });
+    // Surface quota (429) so the client can pause live corrections for the
+    // session while still keeping the full end-of-session report.
+    const quota = statusOf(err) === 429;
+    return NextResponse.json(
+      { error: quota ? "quota" : "Correction failed." },
+      { status: quota ? 429 : 502 }
+    );
   }
 }

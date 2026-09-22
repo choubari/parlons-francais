@@ -33,7 +33,11 @@ export function CallExperience({ scenario }: { scenario: ChosenScenario }) {
   const [transcript, setTranscript] = useState<TranscriptTurn[]>([]);
   // Live per-turn corrections, keyed by the transcript index of a "caller" turn.
   const [corrections, setCorrections] = useState<Record<number, LiveCorrection>>({});
+  const [liveCorrect, setLiveCorrect] = useState(true);
+  const [quotaPaused, setQuotaPaused] = useState(false);
+  const [pumpTick, setPumpTick] = useState(0);
   const checkedRef = useRef<Set<number>>(new Set());
+  const inFlightRef = useRef(false);
   const callRef = useRef<LiveCall | null>(null);
   const endedRef = useRef(false);
   const liveRef = useRef(false);
@@ -67,35 +71,52 @@ export function CallExperience({ scenario }: { scenario: ChosenScenario }) {
 
   useEffect(() => () => callRef.current?.stop(), []);
 
-  // As soon as one of the learner's turns is finalized (a later turn exists),
-  // send it for a quick correction and surface an inline hint. The immersive
-  // conversation itself never corrects — this is the "live" layer on top.
+  // Live correction layer: once one of the learner's turns is finalized (a
+  // reply came after it), check it. We process ONE at a time (natural throttle
+  // that keeps API usage — and quota — low) and re-pump when each finishes. The
+  // immersive conversation itself never corrects; this sits on top, and the
+  // end-of-session report is always the authoritative source.
   useEffect(() => {
-    if (phase !== "live") return;
-    transcript.forEach((turn, i) => {
-      if (turn.role !== "caller") return;
-      if (checkedRef.current.has(i)) return;
-      const finalized = i < transcript.length - 1; // a reply came after it
-      if (!finalized) return;
-      checkedRef.current.add(i);
-      const words = turn.text.trim().split(/\s+/).filter(Boolean);
-      if (words.length < 3) return; // too short to correct meaningfully
-      fetch("/api/correct", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ sentence: turn.text }),
+    if (phase !== "live" || !liveCorrect || inFlightRef.current) return;
+    const idx = transcript.findIndex(
+      (turn, i) =>
+        turn.role === "caller" && i < transcript.length - 1 && !checkedRef.current.has(i)
+    );
+    if (idx === -1) return;
+    checkedRef.current.add(idx);
+    const text = transcript[idx].text;
+    if (text.trim().split(/\s+/).filter(Boolean).length < 3) {
+      setPumpTick((x) => x + 1); // too short — skip, but keep the queue moving
+      return;
+    }
+    inFlightRef.current = true;
+    fetch("/api/correct", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ sentence: text }),
+    })
+      .then(async (r) => {
+        if (r.status === 429) {
+          // Out of quota — pause live checks; the final report still runs.
+          setLiveCorrect(false);
+          setQuotaPaused(true);
+          return null;
+        }
+        return r.ok ? r.json() : null;
       })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((d) => {
-          if (d?.correction && !d.correction.ok) {
-            setCorrections((prev) => ({ ...prev, [i]: d.correction }));
-          }
-        })
-        .catch(() => {
-          /* best-effort; the end-of-session report is the source of truth */
-        });
-    });
-  }, [transcript, phase]);
+      .then((d) => {
+        if (d?.correction && !d.correction.ok) {
+          setCorrections((prev) => ({ ...prev, [idx]: d.correction }));
+        }
+      })
+      .catch(() => {
+        /* best-effort; the end-of-session report is the source of truth */
+      })
+      .finally(() => {
+        inFlightRef.current = false;
+        setPumpTick((x) => x + 1);
+      });
+  }, [transcript, phase, liveCorrect, pumpTick]);
 
   async function start() {
     setPhase("connecting");
@@ -281,6 +302,20 @@ export function CallExperience({ scenario }: { scenario: ChosenScenario }) {
                 >
                   {mm}:{ss}
                 </span>
+                <button
+                  onClick={() => {
+                    setLiveCorrect((v) => !v);
+                    setQuotaPaused(false);
+                  }}
+                  title="Correction en direct"
+                  className={`rounded-full border px-3 py-2 text-[13px] font-semibold transition ${
+                    liveCorrect
+                      ? "border-flame bg-flame-soft text-danger"
+                      : "border-line bg-paper text-muted"
+                  }`}
+                >
+                  ✍️ Live {liveCorrect ? "on" : "off"}
+                </button>
                 <Button variant="secondary" pill size="sm" onClick={toggleMute} aria-label="mute">
                   {muted ? `🔇` : `🎙️`}
                 </Button>
@@ -289,6 +324,13 @@ export function CallExperience({ scenario }: { scenario: ChosenScenario }) {
                 </Button>
               </div>
             </div>
+
+            {quotaPaused && (
+              <div className="rounded-[10px] border border-line bg-honey-soft px-4 py-2.5 text-[13px] text-ink-soft">
+                Correction en direct en pause (quota de l&apos;API atteint). Le rapport
+                complet reste disponible à la fin de la session.
+              </div>
+            )}
 
             <div
               ref={scrollRef}
