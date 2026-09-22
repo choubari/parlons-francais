@@ -49,7 +49,7 @@ export default function ExercisePage({
   }, [id]);
 
   return (
-    <main className="animate-rise mx-auto w-full max-w-[760px] flex-1 px-5 pb-16 pt-10 sm:px-10">
+    <main className="animate-rise mx-auto w-full max-w-[1080px] flex-1 px-5 pb-16 pt-10 sm:px-10">
       {state === "loading" && <div className="mt-16 text-center text-muted">…</div>}
       {state === "notfound" && (
         <Card className="mt-6 flex flex-col items-start gap-3 p-8">

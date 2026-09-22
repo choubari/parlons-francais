@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { LiveCall, TranscriptTurn } from "@/lib/live-client";
@@ -37,6 +37,13 @@ export function CallExperience({ scenario }: { scenario: ChosenScenario }) {
   const callRef = useRef<LiveCall | null>(null);
   const endedRef = useRef(false);
   const liveRef = useRef(false);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+
+  // Keep the transcript pinned to the latest line as it streams in.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [transcript, corrections]);
 
   const endCall = useCallback(() => {
     if (endedRef.current) return; // guard: stop() triggers onClose → endCall again
@@ -145,7 +152,6 @@ export function CallExperience({ scenario }: { scenario: ChosenScenario }) {
   const mm = Math.floor(secondsLeft / 60);
   const ss = String(secondsLeft % 60).padStart(2, "0");
   const low = secondsLeft <= 30;
-  const activePhase = Math.min(3, Math.floor((CALL_SECONDS - secondsLeft) / 45));
 
   // Calls require an account (scores are attributed to the user).
   if (!loading && !user) {
@@ -162,7 +168,7 @@ export function CallExperience({ scenario }: { scenario: ChosenScenario }) {
   return (
     <>
       {phase === "briefing" && (
-        <>
+        <div className="mx-auto w-full max-w-[720px]">
           <button
             onClick={() => router.push("/")}
             className="mb-4 text-[14px] font-semibold text-muted hover:text-ink"
@@ -200,7 +206,7 @@ export function CallExperience({ scenario }: { scenario: ChosenScenario }) {
               <span className="text-[13px] text-muted">{t.call.minutesNote}</span>
             </div>
           </Card>
-        </>
+        </div>
       )}
 
       {phase === "connecting" && (
@@ -217,120 +223,104 @@ export function CallExperience({ scenario }: { scenario: ChosenScenario }) {
       )}
 
       {phase === "live" && (
-        <div className="flex flex-col items-center gap-5">
-          <div
-            className={`font-[family-name:var(--font-display)] text-[56px] font-bold tabular-nums ${
-              low ? "text-danger" : "text-ink"
-            }`}
-          >
-            {mm}:{ss}
-          </div>
-
-          <div className="flex flex-col items-center gap-3">
-            <div className={`relative ${speaking ? "speaking" : ""}`}>
-              <PersonaAvatar name={personaName} size={110} difficulty={scenario.difficulty} />
-            </div>
-            <div className="text-center">
-              <div className="font-[family-name:var(--font-display)] text-[19px] font-bold">
-                {personaName}
-              </div>
-              {personaRole && <div className="text-[13px] text-muted">{personaRole}</div>}
-            </div>
-            <div className="flex items-center gap-2 text-[14px] font-medium text-muted">
-              <span
-                className={`inline-block h-2 w-2 rounded-full ${speaking ? "bg-flame" : "bg-moss"}`}
-                style={speaking ? { animation: "pulse-dot 1.2s infinite" } : undefined}
-              />
-              {speaking ? t.call.isSpeaking : t.call.yourTurn}
-            </div>
-          </div>
-
-          {/* Call-phase timeline */}
-          <div className="w-full max-w-[520px]">
-            <div className="flex items-center px-1">
-              {t.call.phases.map((p, i) => (
-                <Fragment key={p}>
-                  <span
-                    className={`h-3.5 w-3.5 flex-none rounded-full transition ${
-                      i <= activePhase ? "bg-grape" : "bg-line"
-                    } ${i === activePhase ? "ring-4 ring-grape-soft" : ""}`}
-                  />
-                  {i < t.call.phases.length - 1 && (
-                    <span className={`h-[3px] flex-1 ${i < activePhase ? "bg-grape" : "bg-line"}`} />
-                  )}
-                </Fragment>
-              ))}
-            </div>
-            <div className="mt-2 flex justify-between">
-              {t.call.phases.map((p, i) => (
-                <span
-                  key={p}
-                  className={`text-[12.5px] ${
-                    i === activePhase ? "font-bold text-grape" : "text-muted"
-                  }`}
-                >
-                  {p}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex gap-3">
-            <Button variant="secondary" pill onClick={toggleMute}>
-              {muted ? `🔇 ${t.call.unmute}` : `🎙️ ${t.call.mute}`}
-            </Button>
-            <Button variant="danger" pill onClick={endCall}>
-              {t.call.hangUp}
-            </Button>
-          </div>
-
-          <Card className="grid w-full gap-5 sm:grid-cols-2" style={{ padding: 22 }}>
-            <div>
-              <Kicker className="mb-1 text-muted">{t.call.whoCalling}</Kicker>
-              <div className="text-[14px] leading-[1.5]">{L(scenario.prospectProfile)}</div>
-            </div>
-            <div>
-              <Kicker className="mb-1 text-muted">{t.call.selling}</Kicker>
-              <div className="text-[14px] leading-[1.5]">{L(scenario.product)}</div>
-            </div>
-            {L(scenario.researchBrief) && (
-              <div className="sm:col-span-2">
-                <Kicker className="mb-1 text-muted">{t.call.brief}</Kicker>
-                <div className="text-[14px] leading-[1.5] text-ink-soft">
-                  {L(scenario.researchBrief)}
+        <div className="grid gap-6 lg:grid-cols-[300px_1fr]">
+          {/* LEFT — context (sticky on wide screens) */}
+          <aside className="flex flex-col gap-4 self-start lg:sticky lg:top-24">
+            <Card style={{ padding: 20 }}>
+              <div className="mb-5 flex flex-col gap-4">
+                <div>
+                  <Kicker className="mb-1 text-muted">{t.call.whoCalling}</Kicker>
+                  <div className="text-[14px] leading-[1.5]">{L(scenario.prospectProfile)}</div>
                 </div>
-              </div>
-            )}
-            <div className="sm:col-span-2">
-              <Kicker className="mb-1 text-muted">{t.call.goal}</Kicker>
-              <div className="text-[14px] leading-[1.5]">{L(scenario.goal)}</div>
-            </div>
-          </Card>
-
-          <Card className="flex max-h-64 w-full flex-col gap-2.5 overflow-y-auto" style={{ padding: 22 }}>
-            {transcript.length === 0 && (
-              <p className="text-[14px] text-muted">{t.call.transcriptPlaceholder}</p>
-            )}
-            {transcript.map((turn, i) => (
-              <div key={i} className="text-[14.5px] leading-[1.5]">
-                <span
-                  className="font-bold"
-                  style={{ color: turn.role === "prospect" ? "var(--color-grape)" : "var(--color-ink)" }}
-                >
-                  {turn.role === "prospect" ? personaName : t.call.you}:
-                </span>{" "}
-                <span className="text-ink-soft">{turn.text}</span>
-                {turn.role === "caller" && corrections[i] && (
-                  <div className="mt-1 rounded-[8px] bg-flame-soft px-2.5 py-1.5 text-[13px] leading-[1.45]">
-                    <span className="font-semibold text-danger">✎ {corrections[i].corrected}</span>
-                    {corrections[i].hint && (
-                      <span className="text-ink-soft"> — {corrections[i].hint}</span>
-                    )}
+                <div>
+                  <Kicker className="mb-1 text-muted">{t.call.selling}</Kicker>
+                  <div className="text-[14px] leading-[1.5] text-ink-soft">{L(scenario.product)}</div>
+                </div>
+                {L(scenario.researchBrief) && (
+                  <div>
+                    <Kicker className="mb-1 text-muted">{t.call.brief}</Kicker>
+                    <div className="text-[14px] leading-[1.5] text-ink-soft">
+                      {L(scenario.researchBrief)}
+                    </div>
                   </div>
                 )}
+                <div>
+                  <Kicker className="mb-1 text-muted">{t.call.goal}</Kicker>
+                  <div className="text-[14px] leading-[1.5]">{L(scenario.goal)}</div>
+                </div>
               </div>
-            ))}
-          </Card>
+            </Card>
+          </aside>
+
+          {/* RIGHT — avatar status + big scrolling transcript */}
+          <div className="flex min-h-[70vh] flex-col gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className={`relative ${speaking ? "speaking" : ""}`}>
+                  <PersonaAvatar name={personaName} size={64} difficulty={scenario.difficulty} />
+                </div>
+                <div>
+                  <div className="font-[family-name:var(--font-display)] text-[18px] font-bold leading-tight">
+                    {personaName}
+                  </div>
+                  {personaRole && <div className="text-[12.5px] text-muted">{personaRole}</div>}
+                  <div className="mt-1 flex items-center gap-2 text-[13px] font-medium text-muted">
+                    <span
+                      className={`inline-block h-2 w-2 rounded-full ${speaking ? "bg-flame" : "bg-moss"}`}
+                      style={speaking ? { animation: "pulse-dot 1.2s infinite" } : undefined}
+                    />
+                    {speaking ? t.call.isSpeaking : t.call.yourTurn}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span
+                  className={`font-[family-name:var(--font-display)] text-[30px] font-bold tabular-nums ${
+                    low ? "text-danger" : "text-ink"
+                  }`}
+                >
+                  {mm}:{ss}
+                </span>
+                <Button variant="secondary" pill size="sm" onClick={toggleMute} aria-label="mute">
+                  {muted ? `🔇` : `🎙️`}
+                </Button>
+                <Button variant="danger" pill size="sm" onClick={endCall}>
+                  {t.call.hangUp}
+                </Button>
+              </div>
+            </div>
+
+            <div
+              ref={scrollRef}
+              className="flex flex-1 flex-col gap-5 overflow-y-auto rounded-[var(--radius-card)] border border-line bg-paper"
+              style={{ padding: 26, maxHeight: "66vh" }}
+            >
+              {transcript.length === 0 && (
+                <p className="text-[16px] text-muted">{t.call.transcriptPlaceholder}</p>
+              )}
+              {transcript.map((turn, i) => (
+                <div key={i}>
+                  <div
+                    className="mb-1 text-[12px] font-bold uppercase tracking-[0.06em]"
+                    style={{ color: turn.role === "prospect" ? "var(--color-grape)" : "var(--color-muted)" }}
+                  >
+                    {turn.role === "prospect" ? personaName : t.call.you}
+                  </div>
+                  <p className="text-[19px] leading-[1.5] text-ink">{turn.text}</p>
+                  {turn.role === "caller" && corrections[i] && (
+                    <div className="mt-2 rounded-[10px] border-l-4 border-flame bg-flame-soft px-4 py-3">
+                      <div className="text-[17px] font-semibold leading-[1.45] text-danger">
+                        ✎ {corrections[i].corrected}
+                      </div>
+                      {corrections[i].hint && (
+                        <div className="mt-0.5 text-[14px] text-ink-soft">{corrections[i].hint}</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </>

@@ -44,27 +44,37 @@ export async function POST(req: NextRequest) {
     .map((t) => `${t.role === "prospect" ? "P" : "A"}: ${t.text}`)
     .join("\n");
 
-  const judgeModel = env.GEMINI_JUDGE_MODEL || "gemini-flash-latest";
+  // Try the configured model first, then fall back to sibling models when the
+  // primary is overloaded (503 UNAVAILABLE happens on the shared free tier).
+  const models = [
+    env.GEMINI_JUDGE_MODEL || "gemini-2.5-flash",
+    "gemini-flash-latest",
+    "gemini-2.0-flash",
+  ].filter((m, i, a) => a.indexOf(m) === i);
   const ai = new GoogleGenAI({ apiKey });
+  const prompt = buildJudgePrompt({ product, goal, transcript: transcriptText, locale });
 
   try {
     let raw: string | undefined;
     let lastErr: unknown;
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        const res = await ai.models.generateContent({
-          model: judgeModel,
-          contents: buildJudgePrompt({ product, goal, transcript: transcriptText, locale }),
-          config: { responseMimeType: "application/json", responseJsonSchema, temperature: 0.4 },
-        });
-        raw = res.text;
-        if (raw) break;
-        lastErr = new Error("empty judge response");
-      } catch (e) {
-        lastErr = e;
-        console.error(`[judge] Gemini attempt ${attempt} failed`, e);
+    outer: for (const model of models) {
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+          const res = await ai.models.generateContent({
+            model,
+            contents: prompt,
+            config: { responseMimeType: "application/json", responseJsonSchema, temperature: 0.4 },
+          });
+          raw = res.text;
+          if (raw) break outer;
+          lastErr = new Error("empty judge response");
+        } catch (e) {
+          lastErr = e;
+          console.error(`[judge] ${model} attempt ${attempt} failed`, e);
+          // Backoff before retrying/falling back; longer on overload.
+          await new Promise((r) => setTimeout(r, 800 * attempt));
+        }
       }
-      if (attempt < 3) await new Promise((r) => setTimeout(r, 500 * attempt));
     }
     if (!raw) throw lastErr ?? new Error("empty judge response");
     const parsed = scoreCardSchema.safeParse(JSON.parse(raw));

@@ -25,7 +25,7 @@ export default function CallPage() {
 
   if (!scenario) return null;
   return (
-    <main className="animate-rise mx-auto w-full max-w-[760px] flex-1 px-5 pb-16 pt-10 sm:px-10">
+    <main className="animate-rise mx-auto w-full max-w-[1080px] flex-1 px-5 pb-16 pt-10 sm:px-10">
       <CallExperience scenario={scenario} />
     </main>
   );
