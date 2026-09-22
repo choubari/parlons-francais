@@ -1,4 +1,4 @@
-name = "french-trainer"
+name = "parlons"
 main = ".open-next/worker.js"
 compatibility_date = "2025-03-25"
 compatibility_flags = ["nodejs_compat"]
@@ -21,20 +21,20 @@ binding = "ASSETS"
 
 # ── D1 database ────────────────────────────────────────────────────────────
 # Create it once, then paste the returned database_id below:
-#   npx wrangler d1 create french-trainer
+#   npx wrangler d1 create parlons
 # Apply the schema (local dev + remote):
-#   npx wrangler d1 migrations apply french-trainer            # local
-#   npx wrangler d1 migrations apply french-trainer --remote   # production
+#   npx wrangler d1 migrations apply parlons            # local
+#   npx wrangler d1 migrations apply parlons --remote   # production
 [[d1_databases]]
 binding = "DB"
-database_name = "french-trainer"
+database_name = "parlons"
 database_id = "REPLACE_WITH_ID_FROM_wrangler_d1_create"
 
 # ── R2 bucket for avatar uploads ───────────────────────────────────────────
-# Bucket "french-avatars". Avatars fall back to generated initials if removed.
+# Bucket "parlons-avatars". Avatars fall back to generated initials if removed.
 [[r2_buckets]]
 binding = "AVATARS"
-bucket_name = "french-avatars"
+bucket_name = "parlons-avatars"
 
 # Secrets (set with `npx wrangler secret put <NAME>` — never commit values):
 #   GEMINI_API_KEY   Google AI Studio key (live avatar + correction)

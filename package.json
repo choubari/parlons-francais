@@ -1,5 +1,5 @@
 {
-  "name": "french-trainer",
+  "name": "parlons",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,8 +9,8 @@
     "lint": "eslint",
     "preview": "cross-env NODE_ENV=production opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "cross-env NODE_ENV=production opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "db:migrate": "wrangler d1 migrations apply french-trainer",
-    "db:migrate:remote": "wrangler d1 migrations apply french-trainer --remote",
+    "db:migrate": "wrangler d1 migrations apply parlons",
+    "db:migrate:remote": "wrangler d1 migrations apply parlons --remote",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {

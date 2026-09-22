@@ -5,6 +5,7 @@ import { LocaleProvider } from "@/lib/i18n/context";
 import { AuthProvider } from "@/lib/auth/context";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { DemoBanner } from "@/components/DemoBanner";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -37,6 +38,7 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
         <LocaleProvider>
           <AuthProvider>
+            <DemoBanner />
             <Header />
             {children}
             <Footer />
