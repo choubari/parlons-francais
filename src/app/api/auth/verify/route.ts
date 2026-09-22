@@ -18,7 +18,12 @@ export async function GET(req: NextRequest) {
   const db = await getDb();
   await ensureSeeded(db);
   const env = await getEnv();
-  const base = (env.APP_URL || new URL(req.url).origin).replace(/\/$/, "");
+  // In dev, redirect back to the real request origin (localhost) — wrangler.toml
+  // [vars] APP_URL would otherwise send us to the prod domain. Prefer APP_URL in
+  // production for canonical callbacks.
+  const reqOrigin = new URL(req.url).origin;
+  const isProd = process.env.NODE_ENV === "production";
+  const base = (isProd ? env.APP_URL || reqOrigin : reqOrigin).replace(/\/$/, "");
 
   const ip =
     req.headers.get("cf-connecting-ip") ??
