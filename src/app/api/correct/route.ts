@@ -3,6 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 import { getEnv } from "@/lib/db/client";
 import { getCurrentUser } from "@/lib/auth/user";
 import { buildLivePrompt, liveResponseJsonSchema, liveCorrectionSchema } from "@/lib/correct";
+import { generateWithRetry } from "@/lib/gemini";
 
 // Per-turn live correction of a single spoken sentence. Kept fast and cheap so
 // it can run after each of the learner's turns without stalling the chat.
@@ -33,21 +34,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Sentence too long." }, { status: 400 });
   }
 
-  const model = env.GEMINI_JUDGE_MODEL || "gemini-flash-latest";
+  const models = [
+    env.GEMINI_JUDGE_MODEL || "gemini-flash-latest",
+    "gemini-3.6-flash",
+  ].filter((m, i, a) => a.indexOf(m) === i);
   const ai = new GoogleGenAI({ apiKey });
 
   try {
-    const res = await ai.models.generateContent({
-      model,
+    // Keep the live hint snappy: fewer retries + shorter backoff than the judge.
+    const raw = await generateWithRetry(ai, {
+      models,
       contents: buildLivePrompt(sentence),
       config: {
         responseMimeType: "application/json",
         responseJsonSchema: liveResponseJsonSchema,
         temperature: 0.2,
       },
+      label: "correct",
+      retriesPerModel: 2,
+      baseDelayMs: 400,
     });
-    const raw = res.text;
-    if (!raw) throw new Error("empty response");
     const parsed = liveCorrectionSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) {
       return NextResponse.json({ error: "Bad format." }, { status: 502 });

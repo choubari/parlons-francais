@@ -4,6 +4,7 @@ import { getEnv, getDb } from "@/lib/db/client";
 import { getCurrentUser } from "@/lib/auth/user";
 import { saveScore } from "@/lib/db/scores";
 import { buildJudgePrompt, responseJsonSchema, scoreCardSchema } from "@/lib/judge";
+import { generateWithRetry } from "@/lib/gemini";
 
 type Turn = { role: "caller" | "prospect"; text: string };
 
@@ -54,28 +55,14 @@ export async function POST(req: NextRequest) {
   const prompt = buildJudgePrompt({ product, goal, transcript: transcriptText, locale });
 
   try {
-    let raw: string | undefined;
-    let lastErr: unknown;
-    outer: for (const model of models) {
-      for (let attempt = 1; attempt <= 2; attempt++) {
-        try {
-          const res = await ai.models.generateContent({
-            model,
-            contents: prompt,
-            config: { responseMimeType: "application/json", responseJsonSchema, temperature: 0.4 },
-          });
-          raw = res.text;
-          if (raw) break outer;
-          lastErr = new Error("empty judge response");
-        } catch (e) {
-          lastErr = e;
-          console.error(`[judge] ${model} attempt ${attempt} failed`, e);
-          // Backoff before retrying/falling back; longer on overload.
-          await new Promise((r) => setTimeout(r, 800 * attempt));
-        }
-      }
-    }
-    if (!raw) throw lastErr ?? new Error("empty judge response");
+    const raw = await generateWithRetry(ai, {
+      models,
+      contents: prompt,
+      config: { responseMimeType: "application/json", responseJsonSchema, temperature: 0.4 },
+      label: "judge",
+      retriesPerModel: 3,
+      baseDelayMs: 800,
+    });
     const parsed = scoreCardSchema.safeParse(JSON.parse(raw));
     if (!parsed.success) {
       console.error("judge schema mismatch", parsed.error);
