@@ -26,9 +26,9 @@
   --color-line-soft: #eaf0f7;
 
   /* accents — bleu-blanc-rouge */
-  --color-flame: #ef4135; /* rouge — primary CTA */
-  --color-flame-soft: #fddedb;
-  --color-danger: #d3352a;
+  --color-flame: #e1000f; /* rouge vif — primary CTA */
+  --color-flame-soft: #fcdcde;
+  --color-danger: #c20010;
   --color-grape: #0055a4; /* bleu — secondary */
   --color-grape-soft: #e2ecf7;
   --color-lime: #0055a4; /* bleu accent (logo tile) */

@@ -60,7 +60,12 @@ export async function POST(req: NextRequest) {
     .bind(hash, email, now + TOKEN_TTL_MS, now)
     .run();
 
-  const base = (env.APP_URL || new URL(req.url).origin).replace(/\/$/, "");
+  // In dev, use the real request origin (localhost) — `env.APP_URL` comes from
+  // wrangler.toml [vars] and would otherwise inject the prod URL. In prod,
+  // prefer APP_URL so callbacks resolve to the canonical domain.
+  const reqOrigin = new URL(req.url).origin;
+  const isProd = process.env.NODE_ENV === "production";
+  const base = (isProd ? env.APP_URL || reqOrigin : reqOrigin).replace(/\/$/, "");
   const url = `${base}/api/auth/verify?token=${raw}`;
 
   try {

@@ -9,11 +9,12 @@ import { LanguageToggle } from "@/components/ui";
 import { UserAvatar } from "@/components/UserAvatar";
 
 function Logo() {
+  // Tricolore tile — bleu / blanc / rouge, no dark surface.
   return (
-    <div className="relative h-[34px] w-[34px] flex-none">
-      <div className="absolute inset-0 rounded-[10px] bg-espresso" />
-      <div className="absolute left-2 top-[7px] h-[9px] w-[9px] rotate-45 rounded-[2px] bg-flame" />
-      <div className="absolute left-[17px] top-[7px] h-[9px] w-[9px] rotate-45 rounded-[2px] bg-lime" />
+    <div className="flex h-[34px] w-[34px] flex-none overflow-hidden rounded-[10px] border border-line">
+      <div className="h-full w-1/3 bg-grape" />
+      <div className="h-full w-1/3 bg-white" />
+      <div className="h-full w-1/3 bg-flame" />
     </div>
   );
 }
